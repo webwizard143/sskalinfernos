@@ -56,35 +56,14 @@ function simpleCsvParser(csvText) {
  * Creates the users.csv file with credentials from 106 to 210 if it doesn't exist.
  */
 function initializeUserStore() {
-    if (fs.existsSync(usersFilePath)) {
-        console.log(`Users file (${path.basename(usersFilePath)}) already exists. Skipping creation.`);
-        return;
+    // On a serverless platform, the users.csv file MUST be part of the deployment.
+    // We no longer attempt to create it at runtime, as the filesystem is read-only.
+    // This function's only job now is to validate its existence.
+    if (!fs.existsSync(usersFilePath)) {
+        console.error('\x1b[31m%s\x1b[0m', `FATAL: The users file is missing at ${usersFilePath}.`);
+        console.error('\x1b[33m%s\x1b[0m', 'This file is required for the application to run. Please ensure "users.csv" is committed to your Git repository.');
+        // In a real app, you might throw an error here to halt initialization.
     }
-
-    console.log('Creating users file with credentials from 106 to 210...');
-    const saltRounds = 10;
-    const usersData = [];
-    for (let i = 106; i <= 210; i++) {
-        const password = String(i);
-        const hashedPassword = bcrypt.hashSync(password, saltRounds);
-        usersData.push({
-            'Login ID': String(i), // This is the Roll Number
-            'PasswordHash': hashedPassword,
-            'Name': `Cadet ${i}`,
-            'Roll Number': String(i),
-            'Passing Year': '2024',
-            'Father’s Name': `Father of ${i}`,
-            'Mother Name': `Mother of ${i}`,
-            'Mob No': '9876543210',
-            'Email': `cadet${i}@example.com`
-        });
-    }
-
-    const workbook = XLSX.utils.book_new();
-    const worksheet = XLSX.utils.json_to_sheet(usersData);
-    XLSX.utils.book_append_sheet(workbook, worksheet, 'Users');
-    XLSX.writeFile(workbook, usersFilePath);
-    console.log('Users file created successfully.');
 }
 
 /**
